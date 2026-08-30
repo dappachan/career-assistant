@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 
+type Review = {
+  id: number;
+  created_at: string;
+  resume_text: string;
+  feedback: string;
+};
+
 function App() {
   const [ health, setHealth] = useState<string>("checking...");
   const [ message, setMessage] = useState<string>("");
@@ -7,7 +14,18 @@ function App() {
   const [ resumeText, setResumeText] = useState<string>("");
   const [ loading, setLoading] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string>("");
+  const [reviews, setReviews] = useState<Review[]>([]);
 
+  async function loadReviews(){
+    try {
+      const res = await fetch("http://localhost:3001/api/reviews");
+      const data = await res.json();
+      setReviews(data.reviews);
+    }catch {
+      console.error("Could not fetch reviews")
+    }
+
+  }
   async function handleReview(){
     setLoading(true);
     setFeedback("");
@@ -20,6 +38,7 @@ function App() {
     });
     const data = await res.json();
     setFeedback(res.ok ? data.feedback : data.error);
+    loadReviews();
     } catch {
       setFeedback("Could not reach the server. ");
     } finally { 
@@ -40,6 +59,7 @@ function App() {
     fetch("http://localhost:3001/api/health")
     .then((res) => res.json())
     .then((data) => setHealth(data.status))
+    .then(() => loadReviews())
     .catch(() => setHealth("server unreachable"));
   }, []);
 
@@ -60,6 +80,13 @@ function App() {
         {loading ? "Analyzing..." : "Review my resume"}
       </button>
       <pre style={{whiteSpace: "pre-wrap"}}>{feedback}</pre>
+      <h2>Recent reviews</h2>
+      {reviews.map((r) => (
+        <div key={r.id}>
+          <strong>{r.created_at}</strong>
+          <p>{r.feedback.slice(0,150)}...</p>
+        </div>
+      ))}
     </main>
   )
 }
