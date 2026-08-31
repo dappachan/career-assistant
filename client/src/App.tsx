@@ -7,6 +7,21 @@ type Review = {
   feedback: string;
 };
 
+function ReviewCard({ review, onDelete} : { review: Review; onDelete: (id: number) => void}){
+    const [ expanded, setExpanded] = useState(false);
+
+    return(
+      <div>
+        <strong>{review.created_at}</strong>
+        <p>{expanded ? review.feedback : review.feedback.slice(0, 150) + "..."}</p>
+        <button onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Collapse" : "Expand"}
+        </button>
+        <button onClick={() => onDelete(review.id)}>Delete</button>
+      </div>
+    );
+  }
+
 function App() {
   const [ health, setHealth] = useState<string>("checking...");
   const [ message, setMessage] = useState<string>("");
@@ -16,6 +31,15 @@ function App() {
   const [feedback, setFeedback] = useState<string>("");
   const [reviews, setReviews] = useState<Review[]>([]);
 
+  async function handleDelete(id: number){
+    try {
+      await fetch(`http://localhost:3001/api/reviews/${id}`, { method: "DELETE" });
+      loadReviews()
+    } catch {
+      console.error("Delete failed");
+    }
+  }
+  
   async function loadReviews(){
     try {
       const res = await fetch("http://localhost:3001/api/reviews");
@@ -82,10 +106,7 @@ function App() {
       <pre style={{whiteSpace: "pre-wrap"}}>{feedback}</pre>
       <h2>Recent reviews</h2>
       {reviews.map((r) => (
-        <div key={r.id}>
-          <strong>{r.created_at}</strong>
-          <p>{r.feedback.slice(0,150)}...</p>
-        </div>
+        <ReviewCard key={r.id} review={r} onDelete={handleDelete} />
       ))}
     </main>
   )

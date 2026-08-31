@@ -59,4 +59,16 @@ app.post("/api/echo", (req, res) => {
     res.json({ echoed: message.toUpperCase(), length: message.length })
 });
 
+app.delete("/api/reviews/:id", async (req, res) => {
+    const itemId = req.params.id; 
+    if ( !itemId || typeof itemId !== "string") {
+      return res.status(400).json({ error: "ID is required."})
+    }
+      const info = db.prepare(
+        "DELETE FROM reviews WHERE id = ?"
+      ).run(itemId);
+
+      res.json({deleted: info.changes > 0});
+});
+
 export default app;
